@@ -1,33 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- ==================== FLASHCARD SOURCE ==================== -->
+<!-- The cards live in their own file so they can be regenerated on their own:
+     example-source-data/my-flashcards.js
+     It must declare TOPIC, JUSTIFICATION and the card list (let, not const).
+     If it is missing, a stub is injected so this page still opens. -->
+<script src="example-source-data/my-flashcards.js"
+  onerror="document.write('<scr'+'ipt>let TOPIC=&quot;Deck not found: example-source-data/my-flashcards.js&quot;;let JUSTIFICATION=&quot;center&quot;;let FLASHCARDS=[];<\/scr'+'ipt>')"></script>
 <script>
 const VERSION = "1.6.0";
 const LANGUAGE = "English"; // English, Español, Français, Deutsch, Nederlands, Italiano, Português, Polski, Русский, Norsk, Svenska, 中文, हिन्दी, বাংলা, 日本語, 한국어, ไทย, العربية, Tiếng Việt, Türkçe, Tagalog, Kiswahili, فارسی, Bahasa Indonesia
 
-// ===== MODIFY YOUR FLASHCARDS HERE =====
-let TOPIC = "Demo Set of Flashcards";
-let JUSTIFICATION = "center"; // "left", "right", or "center"
-
-// Option 1: Array of arrays format
-let FLASHCARDS = [
-["What is the capital of France?", "Paris"],
-["What is 2 + 2?", "4"],
-["What is the largest planet in our solar system?", "<b>Jupiter</b><br><i>It has a mass of 1.898 × 10²⁷ kg</i>"],
-["What year did World War II end?", "1945"],
-["Who wrote 'Romeo and Juliet'?", "William Shakespeare"],
-["What is HTML?", "<b>HyperText Markup Language</b><br>The standard markup language for creating web pages"],
-];
-
-// Option 2: CSV string format (uncomment to use)
-/*
-let FLASHCARDS = `"What is the capital of France?","Paris"
-"What is 2 + 2?","4"
-"What is the largest planet in our solar system?","<b>Jupiter</b><br><i>It has a mass of 1.898 × 10²⁷ kg</i>"
-"What year did World War II end?","1945"
-"Who wrote 'Romeo and Juliet'?","William Shakespeare"
-"What is HTML?","<b>HyperText Markup Language</b><br>The standard markup language for creating web pages"`;
-*/
-// ========================================
+// ===== FLASHCARDS COME FROM example-source-data/my-flashcards.js =====
+// The <script src> tag near the top of this file loads TOPIC, JUSTIFICATION and
+// the card array from that file.  Nothing is declared here on purpose: the deck
+// uses let/const at the top level, and declaring the same names twice is a
+// SyntaxError that would stop this whole script.
+//   * change the cards  -> edit/regenerate example-source-data/my-flashcards.js
+//   * standalone copy   -> the editor's Download button bakes the deck in
+// ===========================================================
 
 // Internationalization text
 const i18n_text = {
@@ -2164,28 +2155,21 @@ let texts = i18n_text[LANGUAGE] || i18n_text['English'];
    return out;
   }
 
-  // Rebuild HTML source with current TOPIC and FLASHCARDS baked in
+  // Rebuild HTML source with the current deck baked in, so a downloaded copy is
+  // standalone even though the page normally loads its cards from a separate file.
   function buildDownloadSource() {
    let html = document.documentElement.outerHTML;
 
-   // Replace the TOPIC declaration
-   const topicStart = html.indexOf('let TOPIC =');
-   if (topicStart !== -1) {
-    const topicLineEnd = html.indexOf('\n', topicStart);
-    html = html.substring(0, topicStart) +
-           'let TOPIC = ' + JSON.stringify(TOPIC) + ';' +
-           html.substring(topicLineEnd);
-   }
-
-   // Replace the active FLASHCARDS block between Option 1 and Option 2 markers
-   const startMarker = '// Option 1: Array of arrays format\n';
-   const endMarker = '\n\n// Option 2: CSV string format';
-   const startIdx = html.indexOf(startMarker);
-   const endIdx = html.indexOf(endMarker, startIdx >= 0 ? startIdx : 0);
-   if (startIdx !== -1 && endIdx !== -1) {
-    html = html.substring(0, startIdx + startMarker.length) +
-           serializeFlashcards(processedFlashcards) +
-           html.substring(endIdx);
+   const deck = 'let TOPIC = ' + JSON.stringify(TOPIC) + ';\n' +
+    'let JUSTIFICATION = ' + JSON.stringify(alignmentState) + ';\n' +
+    serializeFlashcards(processedFlashcards) + '\n';
+   const deckBlock = '<script>\n' + deck + '<\/script>';
+   const reference = /<script src="example-source-data\/my-flashcards\.js"[\s\S]*?<\/script>/;
+   if (reference.test(html)) {
+    html = html.replace(reference, function () { return deckBlock; });
+   } else {
+    const anchor = html.indexOf('const VERSION = ');
+    if (anchor !== -1) { html = html.substring(0, anchor) + deck + html.substring(anchor); }
    }
 
    return html;
